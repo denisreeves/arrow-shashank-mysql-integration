@@ -220,10 +220,10 @@ def send_welcome_email(email, name, password):
     """Send a welcome email to the new user with their login credentials."""
     try:
         # Email configuration (replace with your SMTP server details)
-        smtp_server = SMTP_SERVER  # Replace with your SMTP server
-        smtp_port = SMTP_PORT  # Replace with your SMTP port
-        sender_email = EMAIL_USER  # Replace with your sender email
-        sender_password = EMAIL_PASSWORD  # Replace with your sender email password
+        smtp_server = mail.mmglobus.in  # Replace with your SMTP server
+        smtp_port = 465  # Replace with your SMTP port
+        sender_email = arrow@mmglobus.in  # Replace with your sender email
+        sender_password = Gwyneth@0925 # Replace with your sender email password
 
         # Create the email content
         subject = "Welcome to Our Platform!"
