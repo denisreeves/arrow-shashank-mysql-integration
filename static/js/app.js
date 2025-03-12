@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 userInfoElement.innerHTML = `
                     <p>Welcome, ${data.user.name}</p>
                     <button id="logout-btn">Logout</button>
-                    <button id="data-visualization-btn" class="data-viz-button display-none" style="display:none">📊 Data Visualization</button>
+                    <button id="data-visualization-btn" class="data-viz-button " >📊 Data Visualization</button>
                 `;
                 document.querySelector('.sidebar').appendChild(userInfoElement);
 
