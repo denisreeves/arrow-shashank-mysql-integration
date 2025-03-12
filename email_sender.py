@@ -66,7 +66,7 @@ def connect_db():
 def get_user_by_email(email):
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM usersSpark WHERE email = %s", (email,))
+    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
     conn.close()
     return user
@@ -74,7 +74,7 @@ def get_user_by_email(email):
 def get_user_by_id(user_id):
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM usersSpark WHERE id = %s", (user_id,))
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     conn.close()
     return user
@@ -284,7 +284,7 @@ def create_user_admin(current_admin):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO usersSpark (id, name, email, password, created_at)
+        INSERT INTO users (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             user_id,
@@ -319,7 +319,7 @@ def get_all_users(current_admin):
     try:
         conn = connect_db()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id, name, email, created_at FROM usersSpark")
+        cursor.execute("SELECT id, name, email, created_at FROM users")
         users = cursor.fetchall()
         conn.close()
         
@@ -346,7 +346,7 @@ def delete_user(current_admin, user_id):
         
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM usersSpark WHERE id = %s", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         conn.close()
         
@@ -386,7 +386,7 @@ def create_user(current_admin):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO usersSpark (id, name, email, password, created_at)
+        INSERT INTO users (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             user_id,
@@ -466,7 +466,7 @@ def update_user(current_admin, user_id):
         # Update the user
         conn = connect_db()
         cursor = conn.cursor()
-        query = f"UPDATE usersSpark SET {', '.join(update_fields)} WHERE id = %s"
+        query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
         update_values.append(user_id)
         cursor.execute(query, update_values)
         conn.commit()
@@ -511,7 +511,7 @@ def get_filtered_users(current_admin):
         created_before = request.args.get('created_before', '')
 
         # Base query
-        query = "SELECT id, name, email, created_at FROM usersSpark WHERE 1=1"
+        query = "SELECT id, name, email, created_at FROM users WHERE 1=1"
         params = []
 
         # Apply name filter
@@ -622,7 +622,7 @@ def get_statistics():
         cursor = conn.cursor(dictionary=True)
 
         # Get user count
-        cursor.execute("SELECT COUNT(*) AS total_users FROM usersSpark")
+        cursor.execute("SELECT COUNT(*) AS total_users FROM users")
         total_users = cursor.fetchone()["total_users"]
 
         # Check if sent_emails table exists before querying
@@ -925,7 +925,7 @@ def register():
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO usersSpark (id, name, email, password, created_at)
+        INSERT INTO users (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             user_id,
@@ -1121,7 +1121,7 @@ def create_admin():
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO usersSpark (id, name, email, password, created_at)
+        INSERT INTO users (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             admin_id,
@@ -1184,7 +1184,7 @@ def get_user_by_email(email):
 
     print(f"Searching for email: {email}")  # Debugging
 
-    cursor.execute("SELECT * FROM usersSpark WHERE LOWER(email) = LOWER(%s)", (email,))
+    cursor.execute("SELECT * FROM users WHERE LOWER(email) = LOWER(%s)", (email,))
     user = cursor.fetchone()
 
     print(f"User found: {user}")  # Debugging
@@ -1239,7 +1239,7 @@ def reset_password():
 
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE usersSpark SET password = %s WHERE id = %s", (hash_password(new_password), user_id))
+    cursor.execute("UPDATE users SET password = %s WHERE id = %s", (hash_password(new_password), user_id))
     conn.commit()
     conn.close()
 
