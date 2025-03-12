@@ -1,5 +1,3 @@
-# Load AI model for email content generation
-# generator = pipeline("text-generation", model="gpt2")
 import os
 import re
 import pandas as pd
@@ -23,14 +21,13 @@ from io import BytesIO
 from flask import Response, session
 import numpy as np
 from pathlib import Path
-#from transformers import pipeline
 import mysql.connector
 from dotenv import load_dotenv
-
 import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
 import os
+
 
 # Load environment variables
 load_dotenv()
@@ -69,7 +66,7 @@ def connect_db():
 def get_user_by_email(email):
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    cursor.execute("SELECT * FROM usersSpark WHERE email = %s", (email,))
     user = cursor.fetchone()
     conn.close()
     return user
@@ -77,7 +74,7 @@ def get_user_by_email(email):
 def get_user_by_id(user_id):
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    cursor.execute("SELECT * FROM usersSpark WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     conn.close()
     return user
@@ -127,7 +124,7 @@ def generate_email_content(prompt):
         "sales": "Dear {name},\n\nI hope this email finds you well. We're excited to share our latest products with you.\n\nBest regards,\nThe Sales Team",
         "newsletter": "Hello {name},\n\nWelcome to our monthly newsletter. Here are the latest updates from our company.\n\nBest,\nThe Newsletter Team",
         "follow-up": "Hi {name},\n\nJust following up on our previous conversation. Let me know if you have any questions.\n\nRegards,\nCustomer Support",
-        "default": "Hello {name},\n\nThank you for your interest in our services. Please let me know if you need any further information.\n\nBest regards,\nArrow Email Assistant"
+        "default": "Hello {name},\n\nThank you for your interest in our services. Please let me know if you need any further information.\n\nBest regards,\nSpark."
     }
     
     # Determine template based on keywords in prompt
@@ -219,7 +216,7 @@ def admin_dashboard_page():
 def send_welcome_email(email, name, password):
     """Send a welcome email to the new user with their login credentials."""
     try:
-       # Email configuration (replace with your SMTP server details)
+        # Email configuration (replace with your SMTP server details)
         smtp_server = SMTP_SERVER  # Replace with your SMTP server
         smtp_port = SMTP_PORT  # Replace with your SMTP port
         sender_email = EMAIL_USER  # Replace with your sender email
@@ -236,9 +233,9 @@ def send_welcome_email(email, name, password):
         - Email: {email}
         - Password: {password}
 
-        Please log in to your account and change your password after your first login.
-        link - https://arrow-app.onrender.com/login
-
+        Please log in to your account and change your password after your first login here.
+        https://spark-mmglobus.onrender.com
+        
         Best regards,
         The Admin Team
         """
@@ -287,7 +284,7 @@ def create_user_admin(current_admin):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO users (id, name, email, password, created_at)
+        INSERT INTO usersSpark (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             user_id,
@@ -322,7 +319,7 @@ def get_all_users(current_admin):
     try:
         conn = connect_db()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id, name, email, created_at FROM users")
+        cursor.execute("SELECT id, name, email, created_at FROM usersSpark")
         users = cursor.fetchall()
         conn.close()
         
@@ -349,7 +346,7 @@ def delete_user(current_admin, user_id):
         
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        cursor.execute("DELETE FROM usersSpark WHERE id = %s", (user_id,))
         conn.commit()
         conn.close()
         
@@ -389,7 +386,7 @@ def create_user(current_admin):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO users (id, name, email, password, created_at)
+        INSERT INTO usersSpark (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             user_id,
@@ -469,7 +466,7 @@ def update_user(current_admin, user_id):
         # Update the user
         conn = connect_db()
         cursor = conn.cursor()
-        query = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
+        query = f"UPDATE usersSpark SET {', '.join(update_fields)} WHERE id = %s"
         update_values.append(user_id)
         cursor.execute(query, update_values)
         conn.commit()
@@ -514,7 +511,7 @@ def get_filtered_users(current_admin):
         created_before = request.args.get('created_before', '')
 
         # Base query
-        query = "SELECT id, name, email, created_at FROM users WHERE 1=1"
+        query = "SELECT id, name, email, created_at FROM usersSpark WHERE 1=1"
         params = []
 
         # Apply name filter
@@ -625,7 +622,7 @@ def get_statistics():
         cursor = conn.cursor(dictionary=True)
 
         # Get user count
-        cursor.execute("SELECT COUNT(*) AS total_users FROM users")
+        cursor.execute("SELECT COUNT(*) AS total_users FROM usersSpark")
         total_users = cursor.fetchone()["total_users"]
 
         # Check if sent_emails table exists before querying
@@ -928,7 +925,7 @@ def register():
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO users (id, name, email, password, created_at)
+        INSERT INTO usersSpark (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             user_id,
@@ -969,7 +966,7 @@ def login():
     token = jwt.encode({
         'user_id': user['id'],
         'email': user['email'],
-        'exp': datetime.utcnow() + timedelta(hours=24)  # Token expires in 24 hours
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24)  # Token expires in 24 hours
     }, JWT_SECRET, algorithm="HS256")
     
     return jsonify({
@@ -995,98 +992,6 @@ def get_user_profile(current_user):
         }
     })
 
-@app.route('/upload-email-list', methods=['POST'])
-@token_required
-def upload_email_list(current_user):
-    """Upload and process an email list."""
-    if 'file' not in request.files:
-        return jsonify({'success': False, 'message': 'No file part'}), 400
-        
-    file = request.files['file']
-    
-    if file.filename == '':
-        return jsonify({'success': False, 'message': 'No selected file'}), 400
-        
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        try:
-            # Read the file with error handling
-            if filename.endswith('.csv'):
-                try:
-                    df = pd.read_csv(file_path)
-                except UnicodeDecodeError:
-                    # Try with different encoding if UTF-8 fails
-                    df = pd.read_csv(file_path, encoding='latin1')
-                except pd.errors.ParserError:
-                    # Try with different separators if comma fails
-                    df = pd.read_csv(file_path, sep=None, engine='python')
-            else:
-                df = pd.read_excel(file_path)
-                
-            # Validate required columns
-            if 'email' not in df.columns:
-                return jsonify({'success': False, 'message': 'File must contain an "email" column'}), 400
-                
-            # Create email list ID
-            list_id = str(uuid.uuid4())
-            
-            # Clean and validate emails
-            valid_emails = []
-            invalid_emails = []
-            
-            for idx, row in df.iterrows():
-                # Handle missing email values
-                if pd.isna(row.get('email')) or row.get('email') is None:
-                    continue
-                    
-                email = str(row['email']).strip().lower()
-                if is_valid_email(email):
-                    # Handle missing name values
-                    name = ""
-                    if 'name' in df.columns and not pd.isna(row.get('name')):
-                        name = str(row.get('name', '')).strip()
-                        
-                    valid_emails.append({
-                        'email': email,
-                        'name': name
-                    })
-                else:
-                    invalid_emails.append(email)
-            
-            # Store the email list
-            email_lists[list_id] = {
-                'user_id': current_user['id'],
-                'filename': filename,
-                'created_at': datetime.now().isoformat(),
-                'emails': valid_emails
-            }
-            
-            return jsonify({
-                'success': True,
-                'message': 'Email list uploaded successfully',
-                'list_id': list_id,
-                'valid_count': len(valid_emails),
-                'invalid_count': len(invalid_emails),
-                'emails': valid_emails
-            }), 200
-            
-        except Exception as e:
-            import traceback
-            print(f"Error processing email list: {str(e)}")
-            print(traceback.format_exc())
-            return jsonify({'success': False, 'message': f'Error processing file: {str(e)}'}), 500
-        finally:
-            # Clean up uploaded file after processing
-            try:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-            except:
-                pass
-    
-    return jsonify({'success': False, 'message': 'File type not allowed'}), 400
 
 @app.route('/generate-email', methods=['POST'])
 @token_required
@@ -1216,7 +1121,7 @@ def create_admin():
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('''
-        INSERT INTO users (id, name, email, password, created_at)
+        INSERT INTO usersSpark (id, name, email, password, created_at)
         VALUES (%s, %s, %s, %s, %s)
         ''', (
             admin_id,
@@ -1232,7 +1137,123 @@ def create_admin():
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error creating admin user: {str(e)}'}), 500
+    
+def send_reset_email(email, reset_link):
+    """Send Reset Email."""
+    try:
+        subject = "Reset Your Spark Account Password"
+        body = f"""
+        Click the link below to reset your password:
+        {reset_link}
+        
+        If you didn't request a password reset, please ignore this email.
+        """
+
+        # Create email message
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_USER
+        msg['To'] = email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        print(f"Sending email to {email} via {SMTP_SERVER}:{SMTP_PORT}")
+
+        # Connect to SMTP server
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.set_debuglevel(1)  # Enable debugging
+            server.starttls()  # Secure connection
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
+            server.send_message(msg)
+
+        print(f"Reset email successfully sent to {email}")
+
+    except smtplib.SMTPAuthenticationError:
+        print("SMTP Authentication Error: Check email/password credentials.")
+    except smtplib.SMTPConnectError:
+        print("Failed to connect to the SMTP server. Check the server and port settings.")
+    except smtplib.SMTPException as e:
+        print(f"SMTP Error: {str(e)}")
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+
+def get_user_by_email(email):
+    """Fetch user by email from MySQL database."""
+    email = email.strip().lower()  # Ensure no spaces and lowercase
+    conn = connect_db()
+    cursor = conn.cursor(dictionary=True)
+
+    print(f"Searching for email: {email}")  # Debugging
+
+    cursor.execute("SELECT * FROM usersSpark WHERE LOWER(email) = LOWER(%s)", (email,))
+    user = cursor.fetchone()
+
+    print(f"User found: {user}")  # Debugging
+
+    conn.close()
+    return user
+
+
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'}), 400
+
+    user = get_user_by_email(email)  # Fetch user from database
+    if not user:
+        return jsonify({'success': False, 'message': 'This email is not registered'}), 404
+
+    # Generate password reset token (valid for 1 hour)
+    reset_token = jwt.encode(
+        {'user_id': user['id'], 'exp': datetime.now(timezone.utc) + timedelta(hours=1)},
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    domain = request.host
+    reset_link = f"http://{domain}/reset-password?token={reset_token}"
+    print(f"Generated Reset Link: {reset_link}")
+
+    send_reset_email(email, reset_link)
+
+    return jsonify({'success': True, 'message': 'Reset link sent to your email'}), 200
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    token = data.get('token')
+    new_password = data.get('new_password')
+
+    if not token or not new_password:
+        return jsonify({'success': False, 'message': 'Invalid request'}), 400
+
+    try:
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = decoded['user_id']
+    except jwt.ExpiredSignatureError:
+        return jsonify({'success': False, 'message': 'Token expired'}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({'success': False, 'message': 'Invalid token'}), 400
+
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE usersSpark SET password = %s WHERE id = %s", (hash_password(new_password), user_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': 'Password reset successfully'}), 200
+
+@app.route('/forgot-password')
+def forgot_password_page():
+    return render_template('forgot_password.html')
+
+@app.route('/reset-password')
+def reset_password_page():
+    return render_template('reset_password.html')
+
 
 if __name__ == '__main__':
-
+    send_reset_email("arrow@mmglobus.in", "new deployment")
     app.run(debug=True)
