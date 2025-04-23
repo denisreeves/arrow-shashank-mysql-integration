@@ -1,4 +1,4 @@
 {
-  "builds"[{"src":"emailsender.py", "use":"@vercel/python"}],
-  "routes":[{"src""/{.*}","dest":"emailsender.py"}]
+  "builds"[{"src":"email_sender.py", "use":"@vercel/python"}],
+  "routes":[{"src""/{.*}","dest":"email_sender.py"}]
 }
